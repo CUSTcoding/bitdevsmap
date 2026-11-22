@@ -17,6 +17,8 @@ JSON file, so adding a community is a one-line change.
 - **[d3-geo](https://github.com/d3/d3-geo)** (Natural Earth projection) +
   **[topojson-client](https://github.com/topojson/topojson-client)** +
   **[world-atlas](https://github.com/topojson/world-atlas)** for the map
+- **[vite-plugin-pwa](https://vite-pwa-org.netlify.app/)** (Workbox) for the web
+  app manifest and the service worker
 
 ## Getting started
 
@@ -33,6 +35,28 @@ bun run dev      # start the dev server (http://localhost:5173)
 bun run build    # type-check and build for production into dist/
 bun run preview  # serve the production build locally
 ```
+
+## Progressive Web App
+
+The production build ships a web app manifest and a service worker, so the site
+can be installed to a home screen and keeps working without a connection:
+
+- The app shell (markup, styles, bundle and the world topology) is precached at
+  install time.
+- The git-scraped `topics.json` and `events.json` are served from cache and
+  refreshed in the background (stale-while-revalidate). If they were never
+  fetched, the app still falls back to the snapshots bundled in `src/data`.
+- A new deploy replaces the cached shell automatically on the next visit.
+
+Service workers only run over HTTPS (or `localhost`) and are not registered by
+the dev server, so use `bun run build && bun run preview` to exercise them.
+
+## Fedi mini app
+
+The same build runs as a mini app inside [Fedi](https://www.fedi.xyz/)'s in-app
+browser, so a Fedi community can open the map from its home screen.
+[`docs/fedi-mini-app.md`](docs/fedi-mini-app.md) has the entry a federation adds
+to its meta config, and what the app changes when it detects the webview.
 
 ## Add your city
 
@@ -89,12 +113,19 @@ changes are needed.
 .github/
   ISSUE_TEMPLATE/add-city.yml   Guided form for the "add a city" issue
   pull_request_template.md      Checklist shown when opening a PR
-docs/                           Original Claude Design reference (static HTML)
-public/favicon.svg              Brand favicon
+docs/
+  BitDevs Map.html              Original Claude Design reference (static HTML)
+  fedi-mini-app.md              Running the site as a mini app inside Fedi
+public/
+  favicon.svg                   Brand favicon
+  pwa-*.png, maskable-*.png     Installable app icons
+  apple-touch-icon.png          Home-screen icon on iOS
+  og-image.png                  Social card (Open Graph / Twitter)
 src/
   data/bitdevs.json             City data — edit this to add a city
   components/                   TopBar, Hero, WorldMap, CityIndex, Footer
   types.ts                      The BitDev type
+  fedi.ts                       Detection of Fedi's mini app webview
   index.css                     Tailwind theme tokens + map component styles
   App.tsx, main.tsx             App entry points
 ```
